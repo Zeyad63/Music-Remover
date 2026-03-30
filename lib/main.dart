@@ -81,7 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final uri = Uri.parse('http://127.0.0.1:5000/remove-music');
+      final uri = Uri.parse(
+        'https://prolongedly-unformulistic-marlyn.ngrok-free.app/remove-music',
+      );
       final request = http.MultipartRequest('POST', uri);
       request.files.add(
         http.MultipartFile.fromBytes('file', _fileBytes!, filename: _fileName!),
