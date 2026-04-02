@@ -1,21 +1,57 @@
-<<<<<<< HEAD
-# music_remover
+# 🎵 Music Remover
 
-A new Flutter project.
+تطبيق ذكاء اصطناعي يحذف الموسيقى من مقاطع الصوت والفيديو مع الحفاظ على الأصوات الأخرى.
 
-## Getting Started
+## 🔗 روابط المشروع
+- **[🌐 افتح التطبيق](https://zeyad63.github.io/Music-Remover/)**
+- **[🖥️ السيرفر على Hugging Face](https://huggingface.co/spaces/Zeyad636/music-remover)**
 
-This project is a starting point for a Flutter application.
+## ✨ المميزات
+- يحذف الموسيقى من أي مقطع صوتي أو فيديو
+- يحافظ على الكلام والأصوات الأخرى
+- يدعم mp3, mp4, wav, aac, m4a
+- مجاني 100%
+- يعمل على المتصفح والأندرويد
+- يمكن حفظ المقطع أو مشاركته مباشرة
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ التقنيات المستخدمة
+| التقنية | الاستخدام |
+|---|---|
+| Flutter | واجهة المستخدم — Web و Android |
+| Python + Flask | السيرفر |
+| Demucs AI | نموذج إزالة الموسيقى من Meta |
+| GitHub Pages | استضافة الواجهة |
+| Hugging Face Spaces | استضافة السيرفر |
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 📁 هيكل المشروع
+```
+Music-Remover/
+├── lib/
+│   └── main.dart        # كود التطبيق
+├── server/
+│   ├── app.py           # السيرفر
+│   ├── Dockerfile       # إعدادات Docker
+│   └── requirements.txt # المكتبات
+├── assets/
+│   └── Music_Remover.png # أيقونة التطبيق
+└── README.md
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-=======
-# Music-Remover
->>>>>>> bf77ddefeaec69afee3f9cb715c8e98fa829d016
+## 📱 كيفية الاستخدام
+1. افتح التطبيق
+2. اضغط **اختر ملف**
+3. اختر مقطع صوتي أو فيديو
+4. اضغط الزر الأرجواني
+5. انتظر المعالجة
+6. احفظ المقطع أو شاركه مباشرة
+
+## 🔮 التطويرات المستقبلية
+- دعم YouTube — تلصق رابط ويحمّله
+- شريط تقدم للمعالجة
+- تاريخ الملفات المعالجة
+- وضع مجاني ومدفوع
+- واجهة عربية كاملة
+- نشر على Google Play
+
+## 👨‍💻 المطور
+**[Zeyad63](https://github.com/Zeyad63)**
