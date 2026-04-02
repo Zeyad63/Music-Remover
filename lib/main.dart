@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'dart:typed_data';
-import 'dart:html' as html;
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 void main() {
   runApp(const MyApp());
@@ -35,7 +38,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _status = 'اضغط لرفع ملف صوتي أو فيديو';
   bool _isLoading = false;
-  String? _filePath;
   Uint8List? _fileBytes;
   String? _fileName;
   Uint8List? _audioBytes;
@@ -57,11 +59,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (result != null) {
+      final file = result.files.single;
+      Uint8List? bytes = file.bytes;
+
+      if (bytes == null && file.path != null && !kIsWeb) {
+        bytes = await File(file.path!).readAsBytes();
+      }
+
       setState(() {
-        _filePath = result.files.single.path;
-        _fileBytes = result.files.single.bytes;
-        _fileName = result.files.single.name;
-        _status = 'تم اختيار: ${result.files.single.name}';
+        _fileBytes = bytes;
+        _fileName = file.name;
+        _status = 'تم اختيار: ${file.name}';
         _audioBytes = null;
         _isPlaying = false;
         _isVideo = false;
@@ -82,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final uri = Uri.parse(
-        'https://prolongedly-unformulistic-marlyn.ngrok-free.app/remove-music',
+        'https://zeyad636-music-remover.hf.space/remove-music',
       );
       final request = http.MultipartRequest('POST', uri);
       request.files.add(
@@ -96,31 +104,49 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _audioBytes = bytes;
           _isVideo = _fileName!.toLowerCase().endsWith('.mp4');
-          _status = _isVideo ? 'تم! اضغط تحميل الفيديو ✓' : 'تم! اضغط تشغيل ✓';
+          _status = 'تم! اضغط تشغيل أو حفظ أو مشاركة ✓';
         });
       } else {
         setState(() => _status = 'حدث خطأ! حاول مرة ثانية.');
       }
     } catch (e) {
-      setState(() => _status = 'خطأ في الاتصال بالسيرفر.');
+      setState(() => _status = 'خطأ في الاتصال بالسيرفر: $e');
     }
 
     setState(() => _isLoading = false);
   }
 
-  void _downloadVideo() {
+  Future<void> _saveFile() async {
     if (_audioBytes == null) return;
-    final blob = html.Blob([_audioBytes!], 'video/mp4');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', 'video_no_music.mp4')
-      ..click();
-    html.Url.revokeObjectUrl(url);
+    if (kIsWeb) {
+      setState(() => _status = 'التحميل غير مدعوم على الويب');
+      return;
+    }
+    final dir = Directory('/storage/emulated/0/Download');
+    final fileName = _isVideo
+        ? 'video_no_music_${DateTime.now().millisecondsSinceEpoch}.mp4'
+        : 'audio_no_music_${DateTime.now().millisecondsSinceEpoch}.wav';
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(_audioBytes!);
+    setState(() => _status = 'تم الحفظ في Downloads ✓');
+  }
+
+  Future<void> _saveAndShare() async {
+    if (_audioBytes == null) return;
+    final dir = await getTemporaryDirectory();
+    final fileName = _isVideo ? 'video_no_music.mp4' : 'audio_no_music.wav';
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(_audioBytes!);
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: 'مقطع بدون موسيقى - Music Remover',
+      ),
+    );
   }
 
   Future<void> _togglePlay() async {
     if (_audioBytes == null) return;
-
     if (_isPlaying) {
       await _player.pause();
       setState(() => _isPlaying = false);
@@ -196,37 +222,65 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (_audioBytes != null) ...[
                 const SizedBox(height: 30),
-                if (_isVideo)
-                  ElevatedButton.icon(
-                    onPressed: _downloadVideo,
-                    icon: const Icon(Icons.download),
-                    label: const Text('تحميل الفيديو بدون موسيقى'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (!_isVideo)
+                      GestureDetector(
+                        onTap: _togglePlay,
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.green.withOpacity(0.2),
+                            border: Border.all(color: Colors.green, width: 2),
+                          ),
+                          child: Icon(
+                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                            color: Colors.green,
+                            size: 36,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: _saveFile,
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.orange.withOpacity(0.2),
+                          border: Border.all(color: Colors.orange, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.download,
+                          color: Colors.orange,
+                          size: 36,
+                        ),
                       ),
                     ),
-                  )
-                else
-                  GestureDetector(
-                    onTap: _togglePlay,
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green.withOpacity(0.2),
-                        border: Border.all(color: Colors.green, width: 2),
-                      ),
-                      child: Icon(
-                        _isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.green,
-                        size: 36,
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: _saveAndShare,
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue.withOpacity(0.2),
+                          border: Border.all(color: Colors.blue, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.share,
+                          color: Colors.blue,
+                          size: 36,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
+                ),
               ],
             ],
           ),
